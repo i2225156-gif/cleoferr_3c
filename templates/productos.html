@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block titulito %}Productos – Cleoferr{% endblock %}
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <h2><i class="fa fa-box me-2"></i>Gestión de Productos</h2>
+        <p>{{ productos|length }} producto(s) encontrado(s)</p>
+    </div>
+    {% if session.rol in ['administrador','vendedor'] %}
+    <a href="/productos/nuevo" class="btn btn-naranja">
+        <i class="fa fa-plus me-1"></i> Nuevo Producto
+    </a>
+    {% endif %}
+</div>
+
+<!-- Filtros -->
+<div class="card card-custom mb-3">
+    <div class="card-body py-3">
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold mb-1"><i class="fa fa-tag me-1"></i>Categoría</label>
+                <select name="categoria" class="form-select">
+                    <option value="">Todas las categorías</option>
+                    {% for c in categorias %}
+                        <option value="{{ c.nombre }}" {% if request.args.get('categoria') == c.nombre %}selected{% endif %}>
+                            {{ c.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold mb-1"><i class="fa fa-industry me-1"></i>Marca</label>
+                <select name="marca" class="form-select">
+                    <option value="">Todas las marcas</option>
+                    {% for m in marcas %}
+                        <option value="{{ m.nombre }}" {% if request.args.get('marca') == m.nombre %}selected{% endif %}>
+                            {{ m.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-naranja w-100"><i class="fa fa-search me-1"></i>Filtrar</button>
+            </div>
+            <div class="col-md-2">
+                <a href="/productos" class="btn btn-outline-secondary w-100"><i class="fa fa-times me-1"></i>Limpiar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="card card-custom">
+    <div class="card-header">
+        <i class="fa fa-list me-2"></i>Listado de Productos
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-custom table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Imagen</th>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Marca</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Estado</th>
+                        {% if session.rol in ['administrador','vendedor'] %}<th>Acciones</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in productos %}
+                    <tr>
+                        <td><span class="fw-bold text-muted">{{ p.id_producto }}</span></td>
+                        <td>
+                            {% if p.imagen %}
+                                <img src="{{ url_for('static', filename='img/' ~ p.imagen) }}"
+                                     class="producto-img" alt="{{ p.nombre }}"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                <div class="producto-img-placeholder" style="display:none">
+                                    <i class="fa fa-wrench"></i>
+                                </div>
+                            {% else %}
+                                <div class="producto-img-placeholder">
+                                    <i class="fa fa-wrench"></i>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="fw-semibold">{{ p.nombre }}</div>
+                            <small class="text-muted">{{ p.descripcion|truncate(50) if p.descripcion else '' }}</small>
+                        </td>
+                        <td><span class="badge bg-secondary">{{ p.categoria or '–' }}</span></td>
+                        <td>{{ p.marca or '–' }}</td>
+                        <td><span class="fw-bold" style="color: var(--naranja)">S/ {{ "%.2f"|format(p.precio|float) }}</span></td>
+                        <td>
+                            {% if p.stock <= 5 %}
+                                <span class="badge bg-danger">{{ p.stock }}</span>
+                            {% elif p.stock <= 20 %}
+                                <span class="badge bg-warning text-dark">{{ p.stock }}</span>
+                            {% else %}
+                                <span class="badge bg-success">{{ p.stock }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge {% if p.estado == 'activo' %}badge-activo{% else %}badge-inactivo{% endif %}">
+                                {{ p.estado }}
+                            </span>
+                        </td>
+                        {% if session.rol in ['administrador','vendedor'] %}
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="/productos/editar/{{ p.id_producto }}" class="btn btn-sm btn-outline-warning" title="Editar">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                {% if session.rol == 'administrador' %}
+                                <a href="/productos/eliminar/{{ p.id_producto }}" class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('¿Eliminar este producto?')" title="Eliminar">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="fa fa-box-open fa-2x mb-2 d-block"></i>
+                            No se encontraron productos
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

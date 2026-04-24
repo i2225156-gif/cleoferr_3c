@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block titulito %}Proveedores – Cleoferr{% endblock %}
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <h2><i class="fa fa-truck me-2"></i>Gestión de Proveedores</h2>
+        <p>{{ proveedores|length }} proveedor(es) registrado(s)</p>
+    </div>
+    <a href="/proveedores/nuevo" class="btn btn-naranja">
+        <i class="fa fa-plus me-1"></i> Nuevo Proveedor
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    {% for p in proveedores %}
+    <div class="col-md-4">
+        <div class="card card-custom h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="stat-icon">
+                        <i class="fa fa-truck"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="fw-bold mb-1">{{ p.nombre }}</h6>
+                        {% if p.contacto %}<p class="mb-1 text-muted small"><i class="fa fa-user me-1"></i>{{ p.contacto }}</p>{% endif %}
+                        {% if p.telefono %}<p class="mb-1 text-muted small"><i class="fa fa-phone me-1"></i>{{ p.telefono }}</p>{% endif %}
+                        {% if p.email %}<p class="mb-1 text-muted small"><i class="fa fa-envelope me-1"></i>{{ p.email }}</p>{% endif %}
+                        {% if p.direccion %}<p class="mb-1 text-muted small"><i class="fa fa-map-marker me-1"></i>{{ p.direccion }}</p>{% endif %}
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-3">
+                    <a href="/proveedores/editar/{{ p.id_proveedor }}" class="btn btn-sm btn-outline-warning">
+                        <i class="fa fa-edit me-1"></i>Editar
+                    </a>
+                    {% if session.rol == 'administrador' %}
+                    <a href="/proveedores/eliminar/{{ p.id_proveedor }}" class="btn btn-sm btn-outline-danger"
+                       onclick="return confirm('¿Eliminar proveedor?')">
+                        <i class="fa fa-trash me-1"></i>Eliminar
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5 text-muted">
+        <i class="fa fa-truck fa-2x mb-2 d-block"></i>
+        No hay proveedores registrados
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

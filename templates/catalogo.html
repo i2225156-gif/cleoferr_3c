@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block titulito %}Catálogo – Cleoferr{% endblock %}
+{% block contenido %}
+
+<div class="page-header">
+    <div>
+        <h2><i class="fa fa-store me-2"></i>Catálogo de Productos</h2>
+        <p>Bienvenido, {{ session.nombre }} – Productos disponibles</p>
+    </div>
+</div>
+
+<div class="row g-3">
+    {% for p in productos %}
+    <div class="col-md-4 col-lg-3">
+        <div class="card card-custom h-100">
+            <div style="height:160px; overflow:hidden; background:#f5f5f5; display:flex; align-items:center; justify-content:center">
+                {% if p.imagen %}
+                    <img src="{{ url_for('static', filename='img/' ~ p.imagen) }}"
+                         style="width:100%;height:100%;object-fit:cover"
+                         onerror="this.parentElement.innerHTML='<i class=\'fa fa-wrench fa-3x\' style=\'color:#ccc\'></i>'">
+                {% else %}
+                    <i class="fa fa-wrench fa-3x" style="color:#ccc"></i>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold">{{ p.nombre }}</h6>
+                <p class="text-muted small mb-2">{{ p.descripcion|truncate(60) if p.descripcion else '' }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-bold" style="color:var(--naranja); font-size:1.1rem">S/ {{ "%.2f"|format(p.precio|float) }}</span>
+                    <span class="badge bg-secondary">{{ p.categoria or '' }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5 text-muted">
+        <i class="fa fa-store fa-2x mb-2 d-block"></i>No hay productos disponibles
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

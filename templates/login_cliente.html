@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cleoferr – Acceso Clientes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --naranja: #E8580A; --gris-oscuro: #1A1A2E; }
+        body {
+            margin: 0; min-height: 100vh;
+            background: linear-gradient(135deg, #0f3460 0%, #16213e 50%, var(--naranja) 100%);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .login-wrapper { width: 100%; max-width: 420px; padding: 20px; }
+        .login-card { background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); overflow: hidden; }
+        .login-header {
+            background: linear-gradient(135deg, var(--naranja), #ff7a35);
+            color: white; text-align: center; padding: 36px 20px;
+        }
+        .login-header .logo-wrap {
+            width: 70px; height: 70px; background: rgba(255,255,255,0.2);
+            border-radius: 50%; margin: 0 auto 14px; display: flex;
+            align-items: center; justify-content: center; font-size: 2rem;
+            border: 3px solid rgba(255,255,255,0.4);
+        }
+        .login-header h2 { margin: 0; font-weight: 800; font-size: 1.8rem; }
+        .login-header p { margin: 6px 0 0; opacity: 0.85; font-size: 0.9rem; }
+        .login-body { padding: 32px; }
+        .form-label { font-weight: 600; color: #333; font-size: 0.88rem; }
+        .form-control { border-radius: 8px; padding: 11px 14px; border: 2px solid #e0e0e0; }
+        .form-control:focus { border-color: var(--naranja); box-shadow: 0 0 0 0.2rem rgba(232,88,10,0.15); }
+        .input-group-custom { position: relative; }
+        .input-group-custom .icon-left {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            color: #aaa; z-index: 5; pointer-events: none;
+        }
+        .input-group-custom .form-control { padding-left: 40px; padding-right: 44px; }
+        .btn-toggle-pw {
+            position: absolute; right: 0; top: 0; height: 100%;
+            background: transparent; border: none; padding: 0 14px;
+            color: #aaa; cursor: pointer; z-index: 5; transition: color 0.2s;
+        }
+        .btn-toggle-pw:hover { color: var(--naranja); }
+        .btn-login {
+            background: linear-gradient(135deg, var(--naranja), #ff7a35);
+            border: none; color: white; font-weight: 700; font-size: 1rem;
+            padding: 13px; border-radius: 10px; width: 100%;
+        }
+        .btn-login:hover { background: linear-gradient(135deg, #c44a07, var(--naranja)); color: white; }
+        .link-admin { text-align: center; margin-top: 16px; font-size: 0.88rem; }
+        .link-admin a { color: var(--naranja); font-weight: 600; text-decoration: none; }
+        .alert-error {
+            background: #fff3f3; border: 1px solid #ffcccc; color: #d32f2f;
+            border-radius: 8px; padding: 12px; margin-bottom: 18px; font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="logo-wrap"><i class="fa fa-shopping-cart"></i></div>
+            <h2>Portal Cliente</h2>
+            <p>Accede al catálogo de productos Cleoferr</p>
+        </div>
+        <div class="login-body">
+            {% if error %}
+                <div class="alert-error"><i class="fa fa-exclamation-circle me-2"></i>{{ error }}</div>
+            {% endif %}
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Correo electrónico</label>
+                    <div class="input-group-custom">
+                        <i class="fa fa-envelope icon-left"></i>
+                        <input type="email" name="correo" class="form-control"
+                               placeholder="tu@correo.com" required>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Contraseña</label>
+                    <div class="input-group-custom" style="position:relative">
+                        <i class="fa fa-lock icon-left"></i>
+                        <input type="password" name="contrasena" id="campoCliente"
+                               class="form-control" placeholder="••••••••" required>
+                        <button type="button" class="btn-toggle-pw" onclick="togglePw('campoCliente','iconoCliente')">
+                            <i class="fa fa-eye" id="iconoCliente"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-login">
+                    <i class="fa fa-shopping-cart me-2"></i>Ingresar al Catálogo
+                </button>
+            </form>
+            <div class="link-admin">
+                ¿Eres administrador? <a href="/login">Panel admin</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function togglePw(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+</script>
+</body>
+</html>
