@@ -6,7 +6,9 @@ from db2 import get_connection
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta_cleoferr"
-app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://prueba-cleofer:Cleofern@mysql-prueba-cleofer.alwaysdata.net/prueba-cleofer_tienda_online"
+app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://prueba-cleofer:Cleoferr@mysql-prueba-cleofer.alwaysdata.net/prueba-cleofer_tienda_online"
+app.config["SQLALCHEMY_DATABASE_URI"] = ("mysql+pymysql://prueba-cleofer_anthuanett:Cleoferr@mysql-prueba-cleofer.alwaysdata.net/prueba-cleofer_tienda_online")
+
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     "pool_pre_ping": True,
     "pool_recycle": 280,
