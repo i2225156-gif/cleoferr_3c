@@ -1,6 +1,9 @@
+import os
+import uuid
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_bcrypt import Bcrypt
 from functools import wraps
+from werkzeug.utils import secure_filename   # ← NUEVO
 from db import db
 from db2 import get_connection
 
@@ -16,7 +19,26 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 }
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+UPLOAD_FOLDER      = os.path.join(app.root_path, 'static', 'img')
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp', 'gif'}
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024   # 5 MB máximo
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def guardar_imagen(file_field):
+    archivo = request.files.get(file_field)
+    if not archivo or archivo.filename == '':
+        return None
+    if not allowed_file(archivo.filename):
+        flash('Formato no permitido. Usa JPG, PNG, WEBP o GIF.', 'danger')
+        return None
+    ext          = archivo.filename.rsplit('.', 1)[1].lower()
+    nombre_unico = f"{uuid.uuid4().hex}.{ext}"
+    archivo.save(os.path.join(UPLOAD_FOLDER, nombre_unico))
+    return nombre_unico
 db.init_app(app)
 bcrypt = Bcrypt(app)
 
@@ -142,7 +164,7 @@ def logout():
     return redirect(url_for('login'))
 
 
-# ── Productos ─────────────────────────────────────────────────
+
 @app.route('/productos')
 @login_required
 def productos():
@@ -199,6 +221,7 @@ def nuevo_producto():
 @login_required
 @escritura_required
 def guardar_producto():
+    nombre_imagen = guardar_imagen('imagen')
     nuevo = Producto(
         nombre       = request.form['nombre'],
         descripcion  = request.form['descripcion'],
@@ -207,7 +230,7 @@ def guardar_producto():
         id_categoria = request.form['id_categoria'],
         id_marca     = request.form['id_marca'],
         estado       = request.form.get('estado', 'activo'),
-        imagen       = request.form.get('imagen', '')
+        imagen       = nombre_imagen
     )
     db.session.add(nuevo)
     db.session.commit()
@@ -235,6 +258,11 @@ def editar_producto(id):
 @escritura_required
 def actualizar_producto(id):
     producto             = db.get_or_404(Producto, id)
+    nombre_imagen = guardar_imagen('imagen')            # ← NUEVO
+    if nombre_imagen and producto.imagen:               # ← NUEVO: borra imagen vieja
+        ruta_vieja = os.path.join(UPLOAD_FOLDER, producto.imagen)
+        if os.path.exists(ruta_vieja):
+            os.remove(ruta_vieja)
     producto.nombre      = request.form['nombre']
     producto.descripcion = request.form['descripcion']
     producto.precio      = request.form['precio']
@@ -242,7 +270,8 @@ def actualizar_producto(id):
     producto.id_categoria = request.form['id_categoria']
     producto.id_marca    = request.form['id_marca']
     producto.estado      = request.form.get('estado', 'activo')
-    producto.imagen      = request.form.get('imagen', '')
+    if nombre_imagen:                                   # ← CAMBIÓ
+        producto.imagen = nombre_imagen
     db.session.commit()
     flash("Producto actualizado correctamente.", "success")
     return redirect(url_for('productos'))
@@ -259,12 +288,9 @@ def eliminar_producto(id):
     return redirect(url_for('productos'))
 
 
-# ── Catálogo cliente ──────────────────────────────────────────
+
 @app.route('/catalogo')
-@login_required
 def catalogo_cliente():
-    if session.get('rol') != 'cliente':
-        return redirect(url_for('productos'))
     conn   = get_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
@@ -544,6 +570,62 @@ def eliminar_proveedor(id):
     finally:
         conn.close()
     return redirect(url_for('proveedores'))
+
+
+# ── Carrito cliente ────────────────────────────────────────────
+@app.route('/carrito')
+@login_required
+def carrito():
+    if session.get('rol') != 'cliente':
+        return redirect(url_for('productos'))
+    return render_template('carrito.html')
+
+
+@app.route('/carrito/agregar', methods=['POST'])
+@login_required
+def carrito_agregar():
+    data        = request.get_json()
+    id_producto = int(data.get('id_producto', 0))
+    cantidad    = int(data.get('cantidad', 1))
+    carrito     = session.get('carrito', {})
+    key         = str(id_producto)
+    if key in carrito:
+        carrito[key]['cantidad'] += cantidad
+    else:
+        conn   = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT nombre, precio FROM producto WHERE id_producto=%s", (id_producto,))
+        prod = cursor.fetchone()
+        conn.close()
+        if prod:
+            carrito[key] = {
+                'id_producto': id_producto,
+                'nombre':      prod['nombre'],
+                'precio':      float(prod['precio']),
+                'cantidad':    cantidad
+            }
+    session['carrito'] = carrito
+    return {'ok': True, 'items': len(carrito)}
+
+
+@app.route('/carrito/confirmar', methods=['POST'])
+@login_required
+def carrito_confirmar():
+    data  = request.get_json()
+    items = data.get('items', [])
+    session['carrito']       = {}
+    session['ultimo_pedido'] = items
+    return {'ok': True}
+
+
+@app.route('/pago')
+def pago():
+    if 'usuario_id' not in session or session.get('rol') != 'cliente':
+        flash("Debes iniciar sesión para pagar.", "warning")
+        return redirect(url_for('login_cliente'))
+
+    carrito = session.get('carrito', [])
+    return render_template('pago.html', productos=carrito)
 
 
 # ── Cambiar clave ─────────────────────────────────────────────

@@ -2,40 +2,348 @@
 {% block titulito %}Catálogo – Cleoferr{% endblock %}
 {% block contenido %}
 
-<div class="page-header">
-    <div>
-        <h2><i class="fa fa-store me-2"></i>Catálogo de Productos</h2>
-        <p>Bienvenido, {{ session.nombre }} – Productos disponibles</p>
+<style>
+.tienda-topbar {
+    background: var(--naranja); color: white;
+    font-size: 0.78rem; padding: 5px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin: -16px -16px 0 -16px;
+}
+.tienda-navbar {
+    background: white; border-bottom: 3px solid var(--naranja);
+    padding: 12px 16px; margin: 0 -16px 20px -16px;
+    display: flex; align-items: center; gap: 16px;
+    flex-wrap: wrap; box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+.tienda-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+.tienda-logo .logo-caja {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, var(--naranja), #ff7a35);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 1.4rem; font-weight: 900;
+    letter-spacing: -1px; line-height: 1; flex-direction: column;
+}
+.tienda-logo .logo-caja small { font-size: 0.42rem; letter-spacing: 2px; font-weight: 400; opacity: 0.85; }
+.tienda-logo .logo-texto {
+    font-size: 0.72rem; font-weight: 700; color: var(--naranja);
+    letter-spacing: 1.5px; text-transform: uppercase; line-height: 1.3;
+}
+.tienda-sep { width: 1px; height: 40px; background: #e0e0e0; flex-shrink: 0; }
+.tienda-menu { display: flex; gap: 4px; flex-shrink: 0; }
+.tienda-menu .tmenu-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 8px 16px; border-radius: 6px;
+    font-size: 0.82rem; font-weight: 700; letter-spacing: 0.5px;
+    text-decoration: none; transition: all 0.2s;
+    border: 2px solid transparent; white-space: nowrap;
+}
+.tienda-menu .tmenu-btn.activo { background: var(--naranja); color: white; border-color: var(--naranja); }
+.tienda-menu .tmenu-btn:not(.activo) { color: #444; border-color: #ddd; background: white; }
+.tienda-menu .tmenu-btn:not(.activo):hover { border-color: var(--naranja); color: var(--naranja); }
+.carrito-badge {
+    background: white; color: var(--naranja); border-radius: 50%;
+    width: 18px; height: 18px; font-size: 0.65rem;
+    display: flex; align-items: center; justify-content: center; font-weight: 800;
+}
+.tmenu-btn:not(.activo) .carrito-badge { background: var(--naranja); color: white; }
+.tienda-search { flex: 1; min-width: 200px; display: flex; }
+.tienda-search input {
+    flex: 1; border: 2px solid #ddd; border-right: none;
+    border-radius: 8px 0 0 8px; padding: 9px 16px; font-size: 0.9rem; outline: none;
+}
+.tienda-search input:focus { border-color: var(--naranja); }
+.tienda-search button {
+    background: var(--naranja); color: white; border: none;
+    border-radius: 0 8px 8px 0; padding: 9px 20px;
+    font-size: 0.85rem; font-weight: 700; cursor: pointer;
+}
+.tienda-search button:hover { background: var(--naranja-oscuro); }
+.tienda-filtros { display: flex; gap: 12px; align-items: stretch; margin-bottom: 20px; flex-wrap: wrap; }
+.cat-dropdown { position: relative; flex-shrink: 0; }
+.cat-dropdown-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 18px; background: white; border: 2px solid #ddd;
+    border-radius: 8px; font-size: 0.85rem; font-weight: 700; color: #333;
+    cursor: pointer; white-space: nowrap; min-width: 165px;
+    justify-content: space-between; transition: border-color 0.2s;
+}
+.cat-dropdown-btn:hover { border-color: var(--naranja); color: var(--naranja); }
+.cat-dropdown-menu {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0;
+    background: white; border: 2px solid #eee; border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12); z-index: 200; min-width: 200px; overflow: hidden;
+}
+.cat-dropdown-menu.abierto { display: block; }
+.cat-dropdown-menu a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; font-size: 0.85rem; color: #333;
+    text-decoration: none; border-bottom: 1px solid #f5f5f5; transition: background 0.15s;
+}
+.cat-dropdown-menu a:last-child { border-bottom: none; }
+.cat-dropdown-menu a:hover { background: rgba(232,88,10,0.07); color: var(--naranja); }
+.cat-dropdown-menu a.seleccionada { background: rgba(232,88,10,0.1); color: var(--naranja); font-weight: 700; }
+.banner-ofertas {
+    flex: 1;
+    background: linear-gradient(135deg, var(--gris-oscuro), #2d2d4e, var(--naranja-oscuro));
+    border-radius: 10px; padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    color: white; min-height: 52px; overflow: hidden; position: relative;
+}
+.banner-ofertas .banner-texto { font-size: 1rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+.banner-ofertas .banner-sub { font-size: 0.75rem; opacity: 0.75; margin-top: 2px; }
+.banner-ofertas .banner-flecha { font-size: 1.6rem; opacity: 0.5; letter-spacing: -4px; }
+.prod-card {
+    border: none; border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    overflow: hidden; transition: transform 0.18s, box-shadow 0.18s;
+    height: 100%; background: white;
+}
+.prod-card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(232,88,10,0.15); }
+.prod-img {
+    height: 160px; background: #f5f5f5;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.prod-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+.prod-card:hover .prod-img img { transform: scale(1.05); }
+.prod-body { padding: 14px; }
+.prod-nombre { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; color: #1a1a2e; }
+.prod-desc { font-size: 0.78rem; color: #888; margin-bottom: 10px; line-height: 1.4; min-height: 32px; }
+.prod-precio { color: var(--naranja); font-weight: 800; font-size: 1.1rem; }
+.prod-cat-badge {
+    background: #f0f0f0; color: #666; font-size: 0.7rem;
+    font-weight: 600; padding: 2px 8px; border-radius: 20px;
+}
+.btn-agregar {
+    background: var(--naranja); color: white; border: none;
+    border-radius: 7px; padding: 8px 14px; font-size: 0.82rem; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center;
+    justify-content: center; gap: 6px; width: 100%; margin-top: 10px; transition: all 0.2s;
+}
+.btn-agregar:hover { background: var(--naranja-oscuro); color: white; transform: scale(1.02); }
+.btn-agregar.agregado { background: #28a745 !important; }
+.sin-resultados { text-align: center; padding: 60px 20px; color: #bbb; width: 100%; }
+.toast-carrito {
+    position: fixed; bottom: 24px; right: 24px;
+    background: #1a1a2e; color: white;
+    padding: 14px 20px; border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+    font-size: 0.88rem; font-weight: 600;
+    display: flex; align-items: center; gap: 10px;
+    z-index: 9999; opacity: 0; transform: translateY(20px);
+    transition: all 0.3s; pointer-events: none;
+}
+.toast-carrito.visible { opacity: 1; transform: translateY(0); }
+.toast-carrito .toast-icon { color: var(--naranja); font-size: 1.1rem; }
+</style>
+
+<div class="tienda-topbar">
+    <span><i class="fa fa-map-marker-alt me-1"></i> Av. Industrial 123, Lima – Perú</span>
+    <span><i class="fa fa-phone me-1"></i> +51 987 654 321 &nbsp;|&nbsp;
+          <i class="fa fa-clock me-1"></i> Lun–Sáb 8am–6pm</span>
+</div>
+
+<div class="tienda-navbar">
+    <a href="/catalogo" class="tienda-logo">
+        <div class="logo-caja">IC<small>CLEOFERR</small></div>
+        <div class="logo-texto">Ferretería<br>Cleoferr Online</div>
+    </a>
+    <div class="tienda-sep"></div>
+    <div class="tienda-menu">
+        <a href="/catalogo" class="tmenu-btn activo">
+            <i class="fa fa-list"></i> CATÁLOGO
+        </a>
+        <a href="/logout" class="tmenu-btn">
+            <i class="fa fa-sign-out-alt"></i> SALIR
+        </a>
+        <a href="/carrito" class="tmenu-btn">
+            <i class="fa fa-shopping-cart"></i> CARRITO
+            <span class="carrito-badge" id="contadorCarrito">0</span>
+        </a>
+    </div>
+    <div class="tienda-search">
+        <input type="text" id="campoBuscar"
+               placeholder="🔍  Buscar productos..."
+               oninput="filtrarProductos()" autocomplete="off">
+        <button type="button" onclick="filtrarProductos()">BUSCAR</button>
     </div>
 </div>
 
-<div class="row g-3">
+<div class="tienda-filtros">
+    <div class="cat-dropdown">
+        <button class="cat-dropdown-btn" onclick="toggleCats()" id="catBtn">
+            <span><i class="fa fa-th-large me-2" style="color:var(--naranja)"></i>CATEGORÍAS</span>
+            <i class="fa fa-chevron-down" style="font-size:0.72rem"></i>
+        </button>
+        <div class="cat-dropdown-menu" id="catMenu"></div>
+    </div>
+    <div class="banner-ofertas">
+        <div>
+            <div class="banner-texto">🔥 Ofertas de la semana</div>
+            <div class="banner-sub">Descuentos en herramientas seleccionadas</div>
+        </div>
+        <div class="banner-flecha">›  ›  ›</div>
+    </div>
+</div>
+
+<div class="row g-3" id="gridProductos">
     {% for p in productos %}
-    <div class="col-md-4 col-lg-3">
-        <div class="card card-custom h-100">
-            <div style="height:160px; overflow:hidden; background:#f5f5f5; display:flex; align-items:center; justify-content:center">
+    <div class="col-6 col-md-4 col-lg-3 prod-item"
+         data-nombre="{{ p.nombre | lower }}"
+         data-desc="{{ (p.descripcion or '') | lower }}"
+         data-categoria="{{ p.categoria or '' }}">
+        <div class="prod-card">
+            <div class="prod-img">
                 {% if p.imagen %}
                     <img src="{{ url_for('static', filename='img/' ~ p.imagen) }}"
-                         style="width:100%;height:100%;object-fit:cover"
+                         alt="{{ p.nombre }}"
                          onerror="this.parentElement.innerHTML='<i class=\'fa fa-wrench fa-3x\' style=\'color:#ccc\'></i>'">
                 {% else %}
                     <i class="fa fa-wrench fa-3x" style="color:#ccc"></i>
                 {% endif %}
             </div>
-            <div class="card-body">
-                <h6 class="fw-bold">{{ p.nombre }}</h6>
-                <p class="text-muted small mb-2">{{ p.descripcion|truncate(60) if p.descripcion else '' }}</p>
+            <div class="prod-body">
+                <div class="prod-nombre">{{ p.nombre }}</div>
+                <div class="prod-desc">{{ p.descripcion|truncate(60) if p.descripcion else '' }}</div>
                 <div class="d-flex justify-content-between align-items-center">
-                    <span class="fw-bold" style="color:var(--naranja); font-size:1.1rem">S/ {{ "%.2f"|format(p.precio|float) }}</span>
-                    <span class="badge bg-secondary">{{ p.categoria or '' }}</span>
+                    <span class="prod-precio">S/ {{ "%.2f"|format(p.precio|float) }}</span>
+                    <span class="prod-cat-badge">{{ p.categoria or '–' }}</span>
                 </div>
+                <button class="btn-agregar"
+                        onclick="agregarAlCarrito({{ p.id_producto }}, '{{ p.nombre|replace("'", "\\'") }}', {{ p.precio|float }}, this)">
+                    <i class="fa fa-cart-plus"></i> Agregar al carrito
+                </button>
             </div>
         </div>
     </div>
     {% else %}
-    <div class="col-12 text-center py-5 text-muted">
-        <i class="fa fa-store fa-2x mb-2 d-block"></i>No hay productos disponibles
+    <div class="col-12 sin-resultados">
+        <i class="fa fa-store fa-2x mb-3 d-block"></i>
+        No hay productos disponibles
     </div>
     {% endfor %}
 </div>
+
+<div id="sinResultados" style="display:none" class="sin-resultados">
+    <i class="fa fa-search fa-2x mb-3 d-block"></i>
+    Sin resultados para "<strong id="terminoBusqueda"></strong>"<br>
+    <a href="#" onclick="limpiarFiltros()" style="color:var(--naranja);font-weight:700;font-size:0.9rem">Limpiar filtros</a>
+</div>
+
+<div class="toast-carrito" id="toastCarrito">
+    <span class="toast-icon"><i class="fa fa-check-circle"></i></span>
+    <span id="toastMsg">Producto agregado</span>
+</div>
+
+<script>
+function getCarrito() {
+    return JSON.parse(localStorage.getItem('carrito_cleoferr') || '[]');
+}
+function saveCarrito(c) {
+    localStorage.setItem('carrito_cleoferr', JSON.stringify(c));
+    actualizarContador();
+}
+function actualizarContador() {
+    const total = getCarrito().reduce((s, i) => s + i.cantidad, 0);
+    document.getElementById('contadorCarrito').textContent = total;
+}
+
+function agregarAlCarrito(id, nombre, precio, btn) {
+    let carrito = getCarrito();
+    const idx = carrito.findIndex(i => i.id === id);
+    if (idx >= 0) carrito[idx].cantidad++;
+    else carrito.push({ id, nombre, precio, cantidad: 1 });
+    saveCarrito(carrito);
+
+    btn.classList.add('agregado');
+    btn.innerHTML = '<i class="fa fa-check"></i> ¡Agregado!';
+    setTimeout(() => {
+        btn.classList.remove('agregado');
+        btn.innerHTML = '<i class="fa fa-cart-plus"></i> Agregar al carrito';
+    }, 1500);
+
+    mostrarToast(nombre + ' agregado al carrito');
+
+    fetch('/carrito/agregar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_producto: id, cantidad: 1 })
+    });
+}
+
+function mostrarToast(msg) {
+    const t = document.getElementById('toastCarrito');
+    document.getElementById('toastMsg').textContent = msg;
+    t.classList.add('visible');
+    setTimeout(() => t.classList.remove('visible'), 2500);
+}
+
+actualizarContador();
+
+(function() {
+    const cats = new Set();
+    document.querySelectorAll('.prod-item').forEach(i => {
+        if (i.dataset.categoria) cats.add(i.dataset.categoria);
+    });
+    const menu = document.getElementById('catMenu');
+    const todas = document.createElement('a');
+    todas.href = '#';
+    todas.innerHTML = '<i class="fa fa-border-all" style="color:var(--naranja)"></i> Todas las categorías';
+    todas.classList.add('seleccionada');
+    todas.onclick = e => { e.preventDefault(); filtrarCategoria('', todas); };
+    menu.appendChild(todas);
+    cats.forEach(cat => {
+        const a = document.createElement('a');
+        a.href = '#';
+        a.innerHTML = `<i class="fa fa-tag" style="color:var(--naranja)"></i> ${cat}`;
+        a.onclick = e => { e.preventDefault(); filtrarCategoria(cat, a); };
+        menu.appendChild(a);
+    });
+})();
+
+function toggleCats() {
+    document.getElementById('catMenu').classList.toggle('abierto');
+}
+document.addEventListener('click', e => {
+    if (!e.target.closest('.cat-dropdown'))
+        document.getElementById('catMenu').classList.remove('abierto');
+});
+
+let categoriaActiva = '';
+function filtrarCategoria(cat, el) {
+    categoriaActiva = cat;
+    document.querySelectorAll('.cat-dropdown-menu a').forEach(a => a.classList.remove('seleccionada'));
+    el.classList.add('seleccionada');
+    const icon = '<i class="fa fa-th-large me-2" style="color:var(--naranja)"></i>';
+    document.getElementById('catBtn').querySelector('span').innerHTML = icon + (cat || 'CATEGORÍAS');
+    document.getElementById('catMenu').classList.remove('abierto');
+    filtrarProductos();
+}
+
+function filtrarProductos() {
+    const q = document.getElementById('campoBuscar').value.toLowerCase().trim();
+    let visible = 0;
+    document.querySelectorAll('.prod-item').forEach(item => {
+        const okB = !q || item.dataset.nombre.includes(q) || item.dataset.desc.includes(q);
+        const okC = !categoriaActiva || item.dataset.categoria === categoriaActiva;
+        if (okB && okC) { item.style.display = ''; visible++; }
+        else item.style.display = 'none';
+    });
+    document.getElementById('sinResultados').style.display = visible === 0 ? 'block' : 'none';
+    document.getElementById('terminoBusqueda').textContent = q || categoriaActiva;
+}
+
+function limpiarFiltros() {
+    document.getElementById('campoBuscar').value = '';
+    categoriaActiva = '';
+    document.querySelectorAll('.prod-item').forEach(i => i.style.display = '');
+    document.getElementById('sinResultados').style.display = 'none';
+    const primera = document.querySelector('.cat-dropdown-menu a');
+    if (primera) {
+        document.querySelectorAll('.cat-dropdown-menu a').forEach(a => a.classList.remove('seleccionada'));
+        primera.classList.add('seleccionada');
+        const icon = '<i class="fa fa-th-large me-2" style="color:var(--naranja)"></i>';
+        document.getElementById('catBtn').querySelector('span').innerHTML = icon + 'CATEGORÍAS';
+    }
+}
+</script>
 {% endblock %}

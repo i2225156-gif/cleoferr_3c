@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% block titulito %}Carrito – Cleoferr{% endblock %}
+{% block contenido %}
+
+<style>
+.carrito-header {
+    background: linear-gradient(135deg, var(--gris-oscuro), var(--naranja-oscuro));
+    color: white; padding: 20px 28px; border-radius: 12px;
+    margin-bottom: 24px; display: flex;
+    align-items: center; justify-content: space-between;
+}
+.carrito-header h2 { margin: 0; font-weight: 700; font-size: 1.5rem; }
+.tabla-carrito { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,0.08); }
+.tabla-carrito thead { background: var(--gris-oscuro); color: white; }
+.tabla-carrito thead th { padding: 14px 16px; font-size: 0.85rem; text-transform: uppercase; border: none; }
+.tabla-carrito tbody td { padding: 14px 16px; vertical-align: middle; border-color: #f0f0f0; }
+.tabla-carrito tbody tr:hover { background: rgba(232,88,10,0.04); }
+.qty-control { display: flex; align-items: center; gap: 8px; }
+.qty-btn {
+    width: 30px; height: 30px; border-radius: 6px;
+    border: 2px solid var(--naranja); background: white;
+    color: var(--naranja); font-weight: 800; font-size: 1rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; line-height: 1;
+}
+.qty-btn:hover { background: var(--naranja); color: white; }
+.qty-num { width: 36px; text-align: center; font-weight: 700; font-size: 1rem; color: var(--gris-oscuro); }
+.btn-eliminar {
+    background: transparent; border: 2px solid #dc3545;
+    color: #dc3545; border-radius: 6px; padding: 5px 10px;
+    cursor: pointer; transition: all 0.15s; font-size: 0.85rem;
+}
+.btn-eliminar:hover { background: #dc3545; color: white; }
+.resumen-card {
+    background: white; border-radius: 12px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08); padding: 24px;
+    position: sticky; top: 80px;
+}
+.resumen-card h5 { font-weight: 800; color: var(--gris-oscuro); border-bottom: 2px solid var(--naranja); padding-bottom: 12px; margin-bottom: 16px; }
+.resumen-linea { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; color: #555; }
+.resumen-total { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 800; color: var(--naranja); margin-top: 12px; padding-top: 12px; border-top: 2px solid #f0f0f0; }
+.btn-pedir {
+    background: var(--naranja); color: white; border: none;
+    border-radius: 8px; padding: 13px; width: 100%;
+    font-weight: 800; font-size: 1rem; cursor: pointer; margin-top: 14px; transition: all 0.2s;
+}
+.btn-pedir:hover { background: var(--naranja-oscuro); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(232,88,10,0.35); }
+.carrito-vacio { text-align: center; padding: 80px 20px; color: #bbb; }
+.carrito-vacio i { font-size: 4rem; margin-bottom: 16px; color: #ddd; display: block; }
+.carrito-vacio h4 { color: #aaa; font-weight: 700; }
+.carrito-vacio a { color: var(--naranja); font-weight: 700; }
+</style>
+
+<div class="carrito-header">
+    <div>
+        <h2><i class="fa fa-shopping-cart me-2"></i>Mi Carrito</h2>
+        <p style="margin:4px 0 0;opacity:0.8;font-size:0.9rem">Revisa tus productos antes de confirmar</p>
+    </div>
+    <a href="/catalogo" class="btn btn-outline-light"><i class="fa fa-arrow-left me-1"></i>Seguir comprando</a>
+</div>
+
+<div id="vistaVacia" class="carrito-vacio" style="display:none">
+    <i class="fa fa-shopping-cart"></i>
+    <h4>Tu carrito está vacío</h4>
+    <p>Agrega productos desde el <a href="/catalogo">catálogo</a></p>
+</div>
+
+<div id="vistaCarrito" style="display:none">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="tabla-carrito">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Precio unit.</th>
+                            <th>Cantidad</th>
+                            <th>Subtotal</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyCarrito"></tbody>
+                </table>
+            </div>
+            <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-outline-danger" onclick="vaciarCarrito()">
+                    <i class="fa fa-trash me-1"></i>Vaciar carrito
+                </button>
+                <a href="/catalogo" class="btn btn-outline-secondary">
+                    <i class="fa fa-plus me-1"></i>Agregar más
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="resumen-card">
+                <h5><i class="fa fa-receipt me-2"></i>Resumen del pedido</h5>
+                <div class="resumen-linea">
+                    <span>Subtotal (<span id="totalItems">0</span> items)</span>
+                    <span>S/ <span id="subtotalVal">0.00</span></span>
+                </div>
+                <div class="resumen-linea">
+                    <span>Envío</span>
+                    <span class="text-success fw-semibold">Por coordinar</span>
+                </div>
+                <div class="resumen-total">
+                    <span>TOTAL</span>
+                    <span>S/ <span id="totalVal">0.00</span></span>
+                </div>
+                <button class="btn-pedir" onclick="realizarPedido()">
+    <i class="fa fa-shopping-bag me-2"></i>Realizar pedido
+</button>
+                <p style="font-size:0.75rem;color:#aaa;text-align:center;margin-top:10px">
+                    <i class="fa fa-lock me-1"></i>Compra segura · Cleoferr
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal confirmación -->
+<div class="modal fade" id="modalPedido" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
+            <div class="modal-header" style="background:var(--naranja);color:white;border:none">
+                <h5 class="modal-title"><i class="fa fa-check-circle me-2"></i>¡Pedido confirmado!</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="fa fa-shopping-bag fa-3x mb-3" style="color:var(--naranja)"></i>
+                <h5 class="fw-bold">¡Gracias por tu pedido!</h5>
+                <p class="text-muted">Nos pondremos en contacto contigo para coordinar la entrega.</p>
+                <div id="resumenPedidoModal" class="text-start bg-light rounded p-3 mb-3" style="font-size:0.85rem"></div>
+                <button class="btn btn-naranja px-4" data-bs-dismiss="modal" onclick="vaciarCarrito()">
+                    <i class="fa fa-home me-1"></i>Volver al catálogo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function getCarrito() {
+    return JSON.parse(localStorage.getItem('carrito_cleoferr') || '[]');
+}
+function saveCarrito(c) {
+    localStorage.setItem('carrito_cleoferr', JSON.stringify(c));
+    renderCarrito();
+}
+
+function renderCarrito() {
+    const carrito = getCarrito();
+    const tbody   = document.getElementById('tbodyCarrito');
+
+    if (carrito.length === 0) {
+        document.getElementById('vistaVacia').style.display = 'block';
+        document.getElementById('vistaCarrito').style.display = 'none';
+        return;
+    }
+    document.getElementById('vistaVacia').style.display = 'none';
+    document.getElementById('vistaCarrito').style.display = 'block';
+
+    tbody.innerHTML = '';
+    let subtotal = 0, totalItems = 0;
+
+    carrito.forEach((item, idx) => {
+        const sub = item.precio * item.cantidad;
+        subtotal   += sub;
+        totalItems += item.cantidad;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <div class="fw-semibold" style="color:var(--gris-oscuro)">${item.nombre}</div>
+                <small class="text-muted">#${item.id}</small>
+            </td>
+            <td class="fw-bold" style="color:var(--naranja)">S/ ${item.precio.toFixed(2)}</td>
+            <td>
+                <div class="qty-control">
+                    <button class="qty-btn" onclick="cambiarCantidad(${idx}, -1)">−</button>
+                    <span class="qty-num">${item.cantidad}</span>
+                    <button class="qty-btn" onclick="cambiarCantidad(${idx}, +1)">+</button>
+                </div>
+            </td>
+            <td class="fw-bold">S/ ${sub.toFixed(2)}</td>
+            <td>
+                <button class="btn-eliminar" onclick="eliminarItem(${idx})">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('totalItems').textContent  = totalItems;
+    document.getElementById('subtotalVal').textContent = subtotal.toFixed(2);
+    document.getElementById('totalVal').textContent    = subtotal.toFixed(2);
+}
+
+function cambiarCantidad(idx, delta) {
+    const carrito = getCarrito();
+    carrito[idx].cantidad += delta;
+    if (carrito[idx].cantidad <= 0) carrito.splice(idx, 1);
+    saveCarrito(carrito);
+}
+function eliminarItem(idx) {
+    const carrito = getCarrito();
+    carrito.splice(idx, 1);
+    saveCarrito(carrito);
+}
+function vaciarCarrito() {
+    localStorage.removeItem('carrito_cleoferr');
+    window.location.href = '/catalogo';
+}
+function realizarPedido() {
+    const carrito = getCarrito();
+    if (carrito.length === 0) return;
+
+    fetch('/carrito/confirmar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: carrito })
+    }).then(() => {
+        localStorage.removeItem('carrito_cleoferr');
+        window.location.href = '/login_cliente';
+    });
+}
+
+renderCarrito();
+</script>
+{% endblock %}
